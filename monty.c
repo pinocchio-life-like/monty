@@ -1,51 +1,58 @@
 #include "monty.h"
+#define BUFSIZE 64
+
+char *operand;
 
 /**
- * main - main function to control all operations
- * @argc: number of argument counts
- * @argv: argument vector or commands
- *
- * Return: 0 if success
+ * main - monty interpreter
+ * @argc: int
+ * @argv: list of arguments
+ * Return: nothing
  */
-
-int main(int argc, char **argv)
+int main(int argc, char const *argv[])
 {
-	FILE *file;
-	char *buff = NULL;
-	char *opcode = NULL;
-	size_t n;
-	stack_t *stack = NULL;
-	unsigned int line_number = 0;
+	line_t *lines;
+	char **line;
+	int line_number;
+	stack_t *stack;
+	char *content;
+	void (*func)(stack_t**, unsigned int);
 
-	if (argc != 2)
+	stack = NULL;
+
+	if (argc == 1)
 	{
-		/* Print error if file specified is more than one or no file */
 		fprintf(stderr, "USAGE: monty file\n");
 		exit(EXIT_FAILURE);
 	}
-	/*----- Open the file for reading ----*/
-	file = fopen(argv[1], "r");
+	lines = textfile_to_array(argv[1]);
+	if (lines == NULL)
+		return (0);
 
-	if (!file)
+	line_number = 0;
+	while ((lines + line_number)->content != NULL)
 	{
-		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-		exit(EXIT_FAILURE);
-	}
-	/*---- While not at the end of file ---*/
-	while (getline(&buff, &n, file) != -1)
-	{
-		line_number++;
-		opcode = strtok(buff, "\n\t\r ");
-		if (opcode != NULL && opcode[0] != '#')
+		content = (lines + line_number)->content;
+		line = split_line(content);
+		operand = line[1];
+
+		func = get_op_func(line[0]);
+		if (func == NULL)
 		{
-			/* Get func if the line is not a comment or empty */
-			get_func(opcode, &stack, line_number);
+			/*TODO: Refactor: Edit more efifcient way to free memory on exit*/
+			fprintf(stderr, "L%d: unknown instruction %s\n", line_number + 1, line[0]);
+			free(line);
+			free_stack(stack);
+			free_lines(lines);
+			exit(EXIT_FAILURE);
 		}
+
+		func(&stack, line_number + 1);
+		free(line);
+		line_number++;
 	}
-	/* Free all elements in the stack */
-	free_all(&stack);
-	/* Free the buffer saving each line */
-	free(buff);
-	fclose(file);
+
+	free_stack(stack);
+	free_lines(lines);
 	return (0);
 }

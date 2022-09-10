@@ -1,14 +1,32 @@
 #ifndef MONTY_H
 #define MONTY_H
-
-/* -------- Libraries ------------- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdbool.h>
 #include <ctype.h>
+#include <fcntl.h>
+
+/**monty errors defined*/
+#define MONTY_ERROR_NONE 0
+#define MONTY_ERROR_INVALID_OPCODE 1
+#define MONTY_ERROR_PUSH_MISSING_ARG 2
+#define MONTY_ERROR_PUSH_INVALID_ARG 3
+#define MONTY_ERROR_PINT_EMPTY 4
+#define MONTY_ERROR_POP_EMPTY 5
 
 
-/* -------- Structures ------------ */
+typedef struct monty_s{
+  char  *save_ptr;
+  int line;
+  char *token;
+  int mode;
+  int error;
+}monty_t;
+
+extern char* operand;
+
 /**
  * struct stack_s - doubly linked list representation of a stack (or queue)
  * @n: integer
@@ -16,13 +34,13 @@
  * @next: points to the next element of the stack (or queue)
  *
  * Description: doubly linked list node structure
- * for stack, queues, LIFO, FIFO
+ * for stack, queues, LIFO, FIFO Holberton project
  */
 typedef struct stack_s
 {
-        int n;
-        struct stack_s *prev;
-        struct stack_s *next;
+	int n;
+	struct stack_s *prev;
+	struct stack_s *next;
 } stack_t;
 
 /**
@@ -31,51 +49,41 @@ typedef struct stack_s
  * @f: function to handle the opcode
  *
  * Description: opcode and its function
- * for stack, queues, LIFO, FIFO
+ * for stack, queues, LIFO, FIFO Holberton project
  */
 typedef struct instruction_s
 {
-        char *opcode;
-        void (*f)(stack_t **stack, unsigned int line_number);
+	char *opcode;
+	void (*f)(stack_t **stack, unsigned int line_number);
 } instruction_t;
 
+/**
+ * struct line_s - line content and its number
+ * @content: line content
+ * @number: line number 
+ *
+ * Description: stores line of the monty source code
+ */
+typedef struct line_s
+{
+	char *content;
+	int number;
+} line_t;
+
+line_t *textfile_to_array(const char *filename);
+void op_push(stack_t **stack, unsigned int line_number);
+void op_pall(stack_t **stack, unsigned int line_number);
+void op_pint(stack_t **stack, unsigned int line_number);
+void op_pop(stack_t **stack, unsigned int line_number);
+void op_swap(stack_t **stack, unsigned int line_number);
+
+char **split_line(char *line);
+void (*get_op_func(char *s))(stack_t**, unsigned int);
 
 
+void free_lines(line_t *head);
+void free_stack(stack_t *head);
+int _atoi(char *s, int* n);
 
-/* -------------- Misc Functions ------------------ */
+#endif
 
-/* +++++++ Get opcode command and call the function ++++++ */
-void get_func(char* opcode, stack_t **stack, unsigned int line_number);
-
-/* ++++++++++ Add new node +++++++++ */
-stack_t *addnode(stack_t **top, unsigned int n);
-
-/* +++++++ Check if arg is a digit ++++++++ */
-int digit(char *arg);
-
-/* +++++++++ Frees all memory +++++++++++++ */
-void free_all(stack_t **stack);
-
-/* --------------- OP CODES ---------------------- */
-
-/* ------ Stack Manipulation functions ----------- */
-void push(stack_t **stack, unsigned int line_number);
-void pop(stack_t **stack, unsigned int line_number);
-void pall(stack_t **stack, unsigned int line_number);
-void pint(stack_t **stack, unsigned int line_number);
-void swap(stack_t **stack, unsigned int line_number);
-void nop(stack_t **stack, unsigned int line_number);
-
-/* ------ Arithmetic Operation Functions --------- */
-void add(stack_t **stack, unsigned int line_number);
-void sub(stack_t **stack, unsigned int line_number);
-void mul(stack_t **stack, unsigned int line_number);
-void Div(stack_t **stack, unsigned int line_number);
-void mod(stack_t **stack, unsigned int line_number);
-
-/* ------- String Print And Rotate Operation Functions */
-void pchar(stack_t **stack, unsigned int line_number);
-void pstr(stack_t **stack, unsigned int line_number);
-void rotl(stack_t **stack, unsigned int line_number);
-
-#endif /*---MONTY_H---*/
